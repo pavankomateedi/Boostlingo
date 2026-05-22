@@ -22,6 +22,9 @@ export function App() {
       .then((cfg) => {
         setConfig(cfg);
         setPair(cfg.defaultLanguagePair);
+        // Default to Realtime when the server has an OpenAI key; otherwise fall
+        // back to Cascade so we never preselect the disabled mode.
+        setMode(cfg.realtimeAvailable ? 'realtime' : 'cascade');
       })
       .catch((err: unknown) =>
         setLoadError(err instanceof Error ? err.message : 'Failed to load config'),
