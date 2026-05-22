@@ -40,6 +40,7 @@ export const languagePairConfigs: Readonly<Record<LanguagePairCode, LanguagePair
   'en-fr': build('en-fr'),
   'en-de': build('en-de'),
   'en-pt': build('en-pt'),
+  'en-te': build('en-te'),
 };
 
 export function getLanguagePairConfig(code: LanguagePairCode): LanguagePairProviderConfig {
