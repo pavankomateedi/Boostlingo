@@ -135,6 +135,7 @@ function handleConnection(mode: Mode, socket: WebSocket): void {
         model: env.OPENAI_REALTIME_MODEL,
         sessionId,
         languagePair: pair,
+        inputSampleRate: env.AUDIO_SAMPLE_RATE,
       });
       bindEvents(rt, socket);
       await rt.start();

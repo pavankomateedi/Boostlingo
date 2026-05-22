@@ -53,6 +53,8 @@ export interface RealtimeSessionConfig {
   readonly model: string;
   readonly sessionId: string;
   readonly languagePair: LanguagePairCode;
+  /** Sample rate (Hz) of the PCM-16 the browser streams in. Must match capture. */
+  readonly inputSampleRate: number;
 }
 
 interface ActiveTurn {
@@ -205,20 +207,34 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
 
   private sendSessionUpdate(): void {
     const pair = LANGUAGE_PAIRS[this.languagePair];
+    // GA Realtime schema (session.type + nested audio.input/output). The legacy
+    // beta shape (flat input_audio_format, top-level voice/modalities) is
+    // rejected with "Realtime Beta API is no longer supported".
     this.send({
       type: 'session.update',
       session: {
-        modalities: ['audio', 'text'],
+        type: 'realtime',
         instructions:
           `You are a simultaneous interpreter. The speaker talks in ${pair.source.name}. ` +
           `Speak ONLY a faithful ${pair.target.name} translation of what they say. Do not ` +
           `answer questions, add commentary, or omit anything. Preserve names, numbers, and ` +
           `domain terminology exactly.`,
-        voice: pair.ttsVoice,
-        input_audio_format: 'pcm16',
-        output_audio_format: 'pcm16',
-        input_audio_transcription: { model: 'gpt-4o-transcribe' },
-        turn_detection: { type: 'server_vad', silence_duration_ms: 500 },
+        output_modalities: ['audio'],
+        audio: {
+          input: {
+            format: { type: 'audio/pcm', rate: this.config.inputSampleRate },
+            transcription: { model: 'gpt-4o-transcribe' },
+            turn_detection: {
+              type: 'server_vad',
+              silence_duration_ms: 500,
+              create_response: true,
+            },
+          },
+          output: {
+            format: { type: 'audio/pcm', rate: REALTIME_OUTPUT_SAMPLE_RATE },
+            voice: pair.ttsVoice,
+          },
+        },
       },
     });
   }

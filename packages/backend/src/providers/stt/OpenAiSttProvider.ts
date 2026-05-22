@@ -37,11 +37,10 @@ export class OpenAiSttProvider implements ISttProvider {
     config: SttConfig,
   ): AsyncIterable<SttEvent> {
     const queue = new AsyncQueue<SttEvent>();
+    // GA Realtime API: no OpenAI-Beta header. The legacy `realtime=v1` header
+    // makes the server reject the connection as the retired beta API.
     const socket = new WebSocket(REALTIME_TRANSCRIBE_URL, {
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'OpenAI-Beta': 'realtime=v1',
-      },
+      headers: { Authorization: `Bearer ${this.apiKey}` },
     });
     this.socket = socket;
 
@@ -89,14 +88,20 @@ export class OpenAiSttProvider implements ISttProvider {
         await waitForOpen(socket);
         socket.send(
           JSON.stringify({
-            type: 'transcription_session.update',
+            // GA transcription session schema: session.type + nested audio.input.
+            type: 'session.update',
             session: {
-              input_audio_format: 'pcm16',
-              input_audio_transcription: {
-                model: config.model ?? this.model,
-                language: config.language.slice(0, 2),
+              type: 'transcription',
+              audio: {
+                input: {
+                  format: { type: 'audio/pcm', rate: config.sampleRate },
+                  transcription: {
+                    model: config.model ?? this.model,
+                    language: config.language.slice(0, 2),
+                  },
+                  turn_detection: { type: 'server_vad', silence_duration_ms: 300 },
+                },
               },
-              turn_detection: { type: 'server_vad', silence_duration_ms: 300 },
             },
           }),
         );
