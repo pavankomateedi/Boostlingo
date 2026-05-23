@@ -227,7 +227,10 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
         audio: {
           input: {
             format: { type: 'audio/pcm', rate: this.config.inputSampleRate },
-            transcription: { model: 'gpt-4o-transcribe' },
+            // Pin the transcription to the source language. Without it the model
+            // auto-detects per segment and hallucinates phantom phrases in other
+            // languages (Chinese/Telugu/etc.) during pauses and noise.
+            transcription: { model: 'gpt-4o-transcribe', language: pair.source.code },
             turn_detection: {
               type: 'server_vad',
               // Wait longer before ending a turn so a natural mid-sentence pause
