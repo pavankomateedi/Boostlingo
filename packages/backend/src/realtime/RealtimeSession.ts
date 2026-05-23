@@ -238,9 +238,10 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
             transcription: { model: 'gpt-4o-transcribe', language: pair.source.code },
             turn_detection: {
               type: 'server_vad',
-              // Wait longer before ending a turn so a natural mid-sentence pause
-              // doesn't make the model "help" by completing the thought.
-              silence_duration_ms: 900,
+              // Balance responsiveness vs. cutting the speaker off mid-pause. The
+              // strict no-completion instructions mean an early turn end just
+              // chunks the translation rather than inventing content.
+              silence_duration_ms: 600,
               create_response: true,
             },
           },
