@@ -215,10 +215,14 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
       session: {
         type: 'realtime',
         instructions:
-          `You are a simultaneous interpreter. The speaker talks in ${pair.source.name}. ` +
-          `Speak ONLY a faithful ${pair.target.name} translation of what they say. Do not ` +
-          `answer questions, add commentary, or omit anything. Preserve names, numbers, and ` +
-          `domain terminology exactly.`,
+          `You are a professional simultaneous interpreter, NOT an assistant. The speaker ` +
+          `speaks ${pair.source.name}; speak a faithful ${pair.target.name} translation aloud. ` +
+          `STRICT RULES: (1) Translate ONLY the exact words the speaker actually said. ` +
+          `(2) NEVER complete, continue, predict, guess, or add any word, name, place, number, ` +
+          `or idea the speaker did not say — if an utterance is cut off or incomplete, translate ` +
+          `only the incomplete fragment exactly as spoken. (3) NEVER answer, converse, comment, ` +
+          `or ask questions. (4) Preserve names, numbers, and terminology exactly; invent nothing. ` +
+          `(5) If you did not clearly hear speech, stay silent.`,
         output_modalities: ['audio'],
         audio: {
           input: {
@@ -226,7 +230,9 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
             transcription: { model: 'gpt-4o-transcribe' },
             turn_detection: {
               type: 'server_vad',
-              silence_duration_ms: 500,
+              // Wait longer before ending a turn so a natural mid-sentence pause
+              // doesn't make the model "help" by completing the thought.
+              silence_duration_ms: 900,
               create_response: true,
             },
           },
