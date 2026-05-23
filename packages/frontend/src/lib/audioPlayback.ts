@@ -12,6 +12,8 @@ export class AudioPlaybackQueue {
   private context: AudioContext | null = null;
   private nextStartTime = 0;
   private readonly sources = new Set<AudioBufferSourceNode>();
+  /** Trailing byte held over when a chunk boundary splits a 16-bit sample. */
+  private leftover = new Uint8Array(0);
 
   /** Lazily create/resume the context inside a user gesture. */
   async resume(): Promise<void> {
@@ -24,7 +26,7 @@ export class AudioPlaybackQueue {
     const context = this.context;
     if (!context) return;
 
-    const pcm = base64ToInt16(base64);
+    const pcm = this.decodeAligned(base64);
     if (pcm.length === 0) return;
 
     const buffer = context.createBuffer(1, pcm.length, sampleRate);
@@ -55,6 +57,7 @@ export class AudioPlaybackQueue {
     }
     this.sources.clear();
     this.nextStartTime = this.context?.currentTime ?? 0;
+    this.leftover = new Uint8Array(0);
   }
 
   async close(): Promise<void> {
@@ -62,12 +65,35 @@ export class AudioPlaybackQueue {
     await this.context?.close();
     this.context = null;
   }
-}
 
-function base64ToInt16(base64: string): Int16Array {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  // Reinterpret the byte buffer as little-endian 16-bit samples.
-  return new Int16Array(bytes.buffer, 0, Math.floor(bytes.byteLength / 2));
+  /**
+   * Decodes a base64 PCM-16 chunk into aligned little-endian samples. The TTS
+   * stream is split into network chunks at arbitrary byte offsets, so a chunk
+   * can end mid-sample; we carry that trailing byte into the next chunk instead
+   * of dropping it. Dropping it shifts every subsequent sample by one byte and
+   * turns the audio into high-frequency static.
+   */
+  private decodeAligned(base64: string): Int16Array {
+    const binary = atob(base64);
+    const incoming = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) incoming[i] = binary.charCodeAt(i);
+
+    let bytes: Uint8Array;
+    if (this.leftover.length > 0) {
+      bytes = new Uint8Array(this.leftover.length + incoming.length);
+      bytes.set(this.leftover, 0);
+      bytes.set(incoming, this.leftover.length);
+    } else {
+      bytes = incoming;
+    }
+
+    const sampleCount = Math.floor(bytes.byteLength / 2);
+    const usableBytes = sampleCount * 2;
+    this.leftover =
+      usableBytes < bytes.byteLength ? bytes.slice(usableBytes) : new Uint8Array(0);
+
+    // Copy the aligned portion into its own buffer so the Int16 view is valid.
+    const aligned = bytes.slice(0, usableBytes);
+    return new Int16Array(aligned.buffer, 0, sampleCount);
+  }
 }
