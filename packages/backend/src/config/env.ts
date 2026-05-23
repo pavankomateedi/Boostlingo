@@ -71,7 +71,7 @@ const envSchema = z.object({
   // ── Session & audio ──
   MAX_SESSIONS: z.coerce.number().default(50),
   AUDIO_CHUNK_MS: z.coerce.number().default(100),
-  AUDIO_SAMPLE_RATE: z.coerce.number().default(16000),
+  AUDIO_SAMPLE_RATE: z.coerce.number().default(24000),
   TTS_JITTER_BUFFER_CHUNKS: z.coerce.number().default(3),
   TTS_MAX_QUEUE_SIZE: z.coerce.number().default(5),
 

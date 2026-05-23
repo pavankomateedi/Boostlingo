@@ -6,6 +6,7 @@
  * from it without echoing the microphone to the speakers.
  */
 
+import { AUDIO_SAMPLE_RATE } from '@workbench/types';
 import { getWorkletUrl } from './audioWorklet.js';
 
 export interface AudioCaptureCallbacks {
@@ -21,7 +22,7 @@ export class AudioCapture {
 
   constructor(
     private readonly callbacks: AudioCaptureCallbacks,
-    private readonly targetSampleRate = 16_000,
+    private readonly targetSampleRate = AUDIO_SAMPLE_RATE,
   ) {}
 
   /**
