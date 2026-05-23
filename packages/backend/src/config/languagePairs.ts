@@ -39,8 +39,6 @@ export const languagePairConfigs: Readonly<Record<LanguagePairCode, LanguagePair
   'es-en': build('es-en'),
   'en-fr': build('en-fr'),
   'en-de': build('en-de'),
-  'en-pt': build('en-pt'),
-  'en-te': build('en-te'),
   'en-hi': build('en-hi'),
 };
 

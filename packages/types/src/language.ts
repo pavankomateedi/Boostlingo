@@ -10,7 +10,7 @@
  */
 
 /** ISO 639-1 language codes the workbench knows about. */
-export type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'te' | 'hi';
+export type LanguageCode = 'en' | 'es' | 'fr' | 'de' | 'hi';
 
 /** OpenAI TTS voice identifiers. */
 export type TtsVoice = 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
@@ -25,14 +25,7 @@ export interface Language {
 }
 
 /** Directed source->target pair codes. */
-export type LanguagePairCode =
-  | 'en-es'
-  | 'es-en'
-  | 'en-fr'
-  | 'en-de'
-  | 'en-pt'
-  | 'en-te'
-  | 'en-hi';
+export type LanguagePairCode = 'en-es' | 'es-en' | 'en-fr' | 'en-de' | 'en-hi';
 
 export interface LanguagePair {
   readonly code: LanguagePairCode;
@@ -46,8 +39,6 @@ const EN: Language = { code: 'en', name: 'English', bcp47: 'en-US' };
 const ES: Language = { code: 'es', name: 'Spanish', bcp47: 'es-ES' };
 const FR: Language = { code: 'fr', name: 'French', bcp47: 'fr-FR' };
 const DE: Language = { code: 'de', name: 'German', bcp47: 'de-DE' };
-const PT: Language = { code: 'pt', name: 'Portuguese', bcp47: 'pt-BR' };
-const TE: Language = { code: 'te', name: 'Telugu', bcp47: 'te-IN' };
 const HI: Language = { code: 'hi', name: 'Hindi', bcp47: 'hi-IN' };
 
 export const LANGUAGE_PAIRS: Readonly<Record<LanguagePairCode, LanguagePair>> = {
@@ -55,8 +46,6 @@ export const LANGUAGE_PAIRS: Readonly<Record<LanguagePairCode, LanguagePair>> = 
   'es-en': { code: 'es-en', source: ES, target: EN, ttsVoice: 'alloy' },
   'en-fr': { code: 'en-fr', source: EN, target: FR, ttsVoice: 'nova' },
   'en-de': { code: 'en-de', source: EN, target: DE, ttsVoice: 'onyx' },
-  'en-pt': { code: 'en-pt', source: EN, target: PT, ttsVoice: 'shimmer' },
-  'en-te': { code: 'en-te', source: EN, target: TE, ttsVoice: 'fable' },
   'en-hi': { code: 'en-hi', source: EN, target: HI, ttsVoice: 'echo' },
 };
 

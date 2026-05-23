@@ -349,8 +349,6 @@ Copy `.env.example` to `.env` and fill in your values.
 | `es-en` | Spanish | English | OpenAI · Deepgram | Claude | `alloy` |
 | `en-fr` | English | French | OpenAI · Deepgram | Claude | `nova` |
 | `en-de` | English | German | OpenAI · Deepgram | Claude | `onyx` |
-| `en-pt` | English | Portuguese | OpenAI · Deepgram | Claude | `shimmer` |
-| `en-te` | English | Telugu | OpenAI | Claude | `fable` |
 | `en-hi` | English | Hindi | OpenAI | Claude | `echo` |
 
 Adding a new language pair requires: (1) adding an entry to `packages/backend/src/config/languagePairs.ts`, (2) adding golden audio samples + reference translations to `golden-data/`, (3) running `pnpm eval:update-baselines`. No other code changes are required — this is the "time-to-onboard a new language pair" metric the assignment asks about.
