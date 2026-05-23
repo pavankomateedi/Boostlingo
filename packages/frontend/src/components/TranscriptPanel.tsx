@@ -56,7 +56,7 @@ function Column({ title, accent, lines, interim }: ColumnProps) {
   const visible = lines.filter((l) => l.text.length > 0);
 
   return (
-    <div className="flex h-[62vh] min-h-[22rem] flex-col rounded-lg border border-slate-700 bg-slate-900/50">
+    <div className="flex h-[48vh] min-h-[18rem] flex-col rounded-lg border border-slate-700 bg-slate-900/50">
       <div className={`border-b border-slate-700 px-5 py-3 text-sm font-semibold ${accent}`}>
         {title}
       </div>
