@@ -70,9 +70,12 @@ export class OpenAiSttProvider implements ISttProvider {
           break;
         }
         case 'error': {
-          queue.fail(
-            classifyProviderError(new Error(event.error?.message ?? 'OpenAI STT error'), this.id),
-          );
+          const msg = event.error?.message ?? 'OpenAI STT error';
+          // Benign trailing error: with server VAD the server commits the audio
+          // itself, so our end-of-stream commit (needed only when the user stops
+          // mid-utterance) finds an empty buffer. Don't surface it as a failure.
+          if (/buffer too small|buffer is empty|input_audio_buffer/i.test(msg)) break;
+          queue.fail(classifyProviderError(new Error(msg), this.id));
           break;
         }
         default:
