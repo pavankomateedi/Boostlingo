@@ -119,7 +119,7 @@ export function App() {
         <StatusBar status={state.status} providerStatuses={state.providerStatuses} error={state.error} />
       </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-6">
         <TranscriptPanel
           turns={state.turns}
           interimSource={state.interimSource}
@@ -127,6 +127,9 @@ export function App() {
           sourceName={currentPair?.source.name ?? 'Source'}
           targetName={currentPair?.target.name ?? 'Target'}
         />
+      </div>
+
+      <div className="mt-4">
         <LatencyDashboard latencies={state.latencies} mode={state.mode} thresholds={config.latencyThresholds} />
       </div>
 

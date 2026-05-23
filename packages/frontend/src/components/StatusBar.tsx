@@ -30,7 +30,9 @@ export function StatusBar({ status, providerStatuses, error }: StatusBarProps) {
         <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
         <span className="font-medium text-slate-200">{style.label}</span>
       </span>
-      {providerStatuses.map((p) => (
+      {providerStatuses
+        .filter((p) => p.status !== 'healthy')
+        .map((p) => (
         <span
           key={p.provider}
           className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-2 py-0.5 text-xs text-slate-300"

@@ -38,32 +38,30 @@ export function LatencyDashboard({ latencies, mode, thresholds }: LatencyDashboa
   const e2eThreshold = mode === 'realtime' ? thresholds.realtimeE2e : thresholds.cascadeE2e;
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-900/50 p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
-        Per-stage latency {mode ? `· ${mode}` : ''}
-      </h3>
-      <div className="space-y-2">
-        {stages.map((stage) => {
-          const values = recent(latencies, stage);
-          const p50 = percentile(values, 50);
-          const p95 = percentile(values, 95);
-          const threshold = thresholdFor(stage, thresholds, e2eThreshold);
-          return (
-            <div key={stage} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-sm">
-              <span className="text-slate-300">{STAGE_LABELS[stage]}</span>
-              <span className={`tabular-nums ${colorClass(p50, threshold)}`}>
-                {values.length ? `${p50} ms` : '—'}
-              </span>
-              <span className="tabular-nums text-xs text-slate-500">
-                {values.length ? `p95 ${p95} ms` : ''}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="mt-3 text-[11px] text-slate-500">
-        Target end-to-end: &lt; {e2eThreshold} ms · rolling over last {RING} turns
-      </p>
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-2.5">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        Latency{mode ? ` · ${mode}` : ''}
+      </span>
+      {stages.map((stage) => {
+        const values = recent(latencies, stage);
+        const p50 = percentile(values, 50);
+        const p95 = percentile(values, 95);
+        const threshold = thresholdFor(stage, thresholds, e2eThreshold);
+        return (
+          <span key={stage} className="inline-flex items-baseline gap-1.5 text-xs">
+            <span className="text-slate-400">{STAGE_LABELS[stage]}</span>
+            <span className={`tabular-nums font-medium ${colorClass(p50, threshold)}`}>
+              {values.length ? `${p50} ms` : '—'}
+            </span>
+            {values.length ? (
+              <span className="tabular-nums text-[10px] text-slate-600">p95 {p95}</span>
+            ) : null}
+          </span>
+        );
+      })}
+      <span className="ml-auto text-[10px] text-slate-600">
+        target &lt; {e2eThreshold} ms · last {RING} turns
+      </span>
     </div>
   );
 }

@@ -56,21 +56,21 @@ function Column({ title, accent, lines, interim }: ColumnProps) {
   const visible = lines.filter((l) => l.text.length > 0);
 
   return (
-    <div className="flex h-72 flex-col rounded-lg border border-slate-700 bg-slate-900/50">
-      <div className={`border-b border-slate-700 px-4 py-2 text-xs font-semibold ${accent}`}>
+    <div className="flex h-[62vh] min-h-[22rem] flex-col rounded-lg border border-slate-700 bg-slate-900/50">
+      <div className={`border-b border-slate-700 px-5 py-3 text-sm font-semibold ${accent}`}>
         {title}
       </div>
-      <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3 text-sm">
+      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-5 py-4 text-lg">
         {visible.length === 0 && interim.length === 0 ? (
           <p className="text-slate-600">Waiting for speech…</p>
         ) : (
           visible.map((l) => (
-            <p key={l.id} className="leading-snug text-slate-100">
+            <p key={l.id} className="leading-relaxed text-slate-100">
               {l.text}
             </p>
           ))
         )}
-        {interim.length > 0 && <p className="italic leading-snug text-slate-500">{interim}</p>}
+        {interim.length > 0 && <p className="italic leading-relaxed text-slate-500">{interim}</p>}
       </div>
     </div>
   );
