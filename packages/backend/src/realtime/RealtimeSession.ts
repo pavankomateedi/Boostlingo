@@ -238,7 +238,7 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
           },
           output: {
             format: { type: 'audio/pcm', rate: REALTIME_OUTPUT_SAMPLE_RATE },
-            voice: pair.ttsVoice,
+            voice: toRealtimeVoice(pair.ttsVoice),
           },
         },
       },
@@ -342,6 +342,35 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
 
 function turnIsEmpty(turn: ActiveTurn): boolean {
   return turn.sourceText.length === 0 && turn.targetText.length === 0;
+}
+
+/**
+ * The Realtime API accepts a different voice set than the cascade TTS (tts-1).
+ * Pairs configure a tts-1 voice; map the ones Realtime rejects to a comparable
+ * Realtime voice so the session.update is not rejected. Voices valid in both
+ * (alloy/echo/shimmer) pass through unchanged.
+ */
+const REALTIME_VOICES = new Set<string>([
+  'alloy',
+  'ash',
+  'ballad',
+  'coral',
+  'echo',
+  'sage',
+  'shimmer',
+  'verse',
+  'marin',
+  'cedar',
+]);
+const REALTIME_VOICE_FALLBACK: Record<string, string> = {
+  nova: 'coral',
+  onyx: 'ash',
+  fable: 'ballad',
+};
+
+function toRealtimeVoice(voice: string): string {
+  if (REALTIME_VOICES.has(voice)) return voice;
+  return REALTIME_VOICE_FALLBACK[voice] ?? 'alloy';
 }
 
 /** Minimal shape of the Realtime server events we read (GA + legacy names). */
