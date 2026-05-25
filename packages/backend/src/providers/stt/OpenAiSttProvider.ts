@@ -11,6 +11,7 @@ import WebSocket from 'ws';
 import type { ISttProvider, SttConfig, SttEvent } from './ISttProvider.js';
 import { AsyncQueue } from '../../lib/asyncQueue.js';
 import { classifyProviderError, ProviderConnectionError } from '../errors.js';
+import { isForeignScript } from '../../lib/scriptFilter.js';
 
 const REALTIME_TRANSCRIBE_URL = 'wss://api.openai.com/v1/realtime?intent=transcription';
 
@@ -64,7 +65,9 @@ export class OpenAiSttProvider implements ISttProvider {
         case 'conversation.item.input_audio_transcription.completed': {
           const text = (event.transcript ?? runningPartial).trim();
           runningPartial = '';
-          if (text.length > 0) {
+          // Drop hallucinated phantoms in a non-source script (e.g. CJK on a
+          // silent/noisy English stream) so they are not shown or translated.
+          if (text.length > 0 && !isForeignScript(text, config.language.slice(0, 2))) {
             queue.push({ type: 'final', text, confidence: 0.95, speechFinal: true });
           }
           break;

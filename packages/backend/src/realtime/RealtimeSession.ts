@@ -26,6 +26,7 @@ import {
 import { TypedEmitter, type EventMap } from '../lib/typedEmitter.js';
 import { classifyProviderError, ProviderConnectionError } from '../providers/errors.js';
 import { LatencyTracker } from '../cascade/LatencyTracker.js';
+import { isForeignScript } from '../lib/scriptFilter.js';
 
 /** OpenAI Realtime output audio is PCM-16 at 24 kHz. */
 const REALTIME_OUTPUT_SAMPLE_RATE = 24_000;
@@ -63,6 +64,9 @@ interface ActiveTurn {
   targetText: string;
   startedAt: number;
   e2eRecorded: boolean;
+  /** Set when the source transcript is a non-source-script hallucination; the
+   *  whole turn (source, target, audio) is then suppressed. */
+  suppressed: boolean;
 }
 
 export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
@@ -146,14 +150,18 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
         const turn = this.ensureTurn();
         if (typeof event.delta === 'string') {
           turn.sourceText += event.delta;
-          this.emitTranscript('source', turn.sourceText, false, turn.id);
+          if (isForeignScript(turn.sourceText, this.sourceCode())) turn.suppressed = true;
+          if (!turn.suppressed) this.emitTranscript('source', turn.sourceText, false, turn.id);
         }
         break;
       }
       case 'conversation.item.input_audio_transcription.completed': {
         const turn = this.ensureTurn();
         turn.sourceText = (event.transcript ?? turn.sourceText).trim();
-        this.emitTranscript('source', turn.sourceText, true, turn.id);
+        // A non-source-script transcript is a hallucination (background noise /
+        // silence) — suppress the whole turn so no foreign text or its audio shows.
+        if (isForeignScript(turn.sourceText, this.sourceCode())) turn.suppressed = true;
+        if (!turn.suppressed) this.emitTranscript('source', turn.sourceText, true, turn.id);
         break;
       }
       // Target-language (translated) transcript, spoken by the model.
@@ -162,7 +170,7 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
         const turn = this.ensureTurn();
         if (typeof event.delta === 'string') {
           turn.targetText += event.delta;
-          this.emitTranscript('target', turn.targetText, false, turn.id);
+          if (!turn.suppressed) this.emitTranscript('target', turn.targetText, false, turn.id);
         }
         break;
       }
@@ -170,14 +178,14 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
       case 'response.audio_transcript.done': {
         const turn = this.ensureTurn();
         turn.targetText = (event.transcript ?? turn.targetText).trim();
-        this.emitTranscript('target', turn.targetText, true, turn.id);
+        if (!turn.suppressed) this.emitTranscript('target', turn.targetText, true, turn.id);
         break;
       }
       // Synthesised translation audio.
       case 'response.output_audio.delta':
       case 'response.audio.delta': {
         const turn = this.ensureTurn();
-        if (typeof event.delta === 'string') {
+        if (typeof event.delta === 'string' && !turn.suppressed) {
           if (!turn.e2eRecorded) {
             turn.e2eRecorded = true;
             this.recordE2e(turn);
@@ -257,7 +265,14 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
   private startTurn(): void {
     if (this.turn && !turnIsEmpty(this.turn)) this.finishTurn();
     const id = `${this.config.sessionId}:rt:${randomUUID().slice(0, 8)}`;
-    this.turn = { id, sourceText: '', targetText: '', startedAt: Date.now(), e2eRecorded: false };
+    this.turn = {
+      id,
+      sourceText: '',
+      targetText: '',
+      startedAt: Date.now(),
+      e2eRecorded: false,
+      suppressed: false,
+    };
     this.emit('turn.start', id);
   }
 
@@ -300,6 +315,10 @@ export class RealtimeSession extends TypedEmitter<RealtimeSessionEvents> {
   private lastTurnLatency(turnId: string): TurnLog['latencies'] {
     const ms = this.turnLatencies.get(turnId);
     return ms === undefined ? {} : { e2e: ms };
+  }
+
+  private sourceCode(): string {
+    return LANGUAGE_PAIRS[this.languagePair].source.code;
   }
 
   private emitTranscript(
